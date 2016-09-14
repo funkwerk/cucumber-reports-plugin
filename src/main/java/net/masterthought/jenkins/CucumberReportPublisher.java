@@ -40,13 +40,23 @@ public class CucumberReportPublisher extends Publisher implements SimpleBuildSte
     public final boolean undefinedFails;
     public final boolean ignoreFailedTests;
     public final boolean parallelTesting;
+    public final String baseDirectory;
+    public final String displayName;
 
     private File targetBuildDirectory;
 
     @DataBoundConstructor
     public CucumberReportPublisher(String jsonReportDirectory, String jenkinsBasePath, String fileIncludePattern,
                                    String fileExcludePattern, boolean skippedFails, boolean pendingFails, boolean undefinedFails,
-                                   boolean ignoreFailedTests, boolean parallelTesting) {
+                                   boolean ignoreFailedTests, boolean parallelTesting, String baseDirectory, String displayName) {
+        if (baseDirectory == null) {
+            baseDirectory = ReportBuilder.BASE_DIRECTORY;
+        }
+        this.baseDirectory = baseDirectory;
+        if (displayName == null) {
+            displayName = Messages.SidePanel_DisplayName();
+        }
+        this.displayName = displayName;
         this.jsonReportDirectory = jsonReportDirectory;
         this.jenkinsBasePath = jenkinsBasePath;
         this.fileIncludePattern = fileIncludePattern;
@@ -68,14 +78,16 @@ public class CucumberReportPublisher extends Publisher implements SimpleBuildSte
 
         generateReport(run, workspace, listener);
 
-        SafeArchiveServingRunAction caa = new SafeArchiveServingRunAction(new File(run.getRootDir(), ReportBuilder.BASE_DIRECTORY),
-                ReportBuilder.BASE_DIRECTORY, ReportBuilder.HOME_PAGE, CucumberReportBaseAction.ICON_NAME, Messages.SidePanel_DisplayName());
+        SafeArchiveServingRunAction caa = new SafeArchiveServingRunAction(new File(run.getRootDir(), this.baseDirectory),
+                this.baseDirectory, ReportBuilder.HOME_PAGE, CucumberReportBaseAction.ICON_NAME, this.displayName);
         run.addAction(caa);
     }
 
 
     private void generateReport(Run<?, ?> build, FilePath workspace, TaskListener listener) throws InterruptedException, IOException {
         listener.getLogger().println("[CucumberReportPublisher] Compiling Cucumber Reports ...");
+        listener.getLogger().println("[CucumberReportPublisher] baseDirectory ... " + this.baseDirectory);
+        listener.getLogger().println("[CucumberReportPublisher] displayName ... " + this.displayName);
 
         // source directory (possibly on slave)
         FilePath workspaceJsonReportDirectory;
